@@ -14,7 +14,7 @@ var username = "<FILL IN USERNAME HERE>";
 var password = "<FILL IN PASSWORD HERE>";
 ```
 
-Please replace these variables and run the Console application.  The application will run against the Sandbox API.  Step through this code to see how you can call the CorpAxe Api with C#. If everything goes as planned, you should see a Console window appear with the following:
+Please replace these variables and run the Console application.  The application will run against the Sandbox API.  Step through this code to see how you can call the [Token Flow](http://docs.corpaxe.apiary.io/reference/authentication/token/retrieve-a-bearer-token) + [Event Flow](http://docs.corpaxe.apiary.io/reference/event/event/retrieve-an-event) in the CorpAxe Api with C#. If everything goes as planned, you should see a Console window appear with the following:
 
 ```winbatch
 Id created: <dynamically_generated_event_id>
