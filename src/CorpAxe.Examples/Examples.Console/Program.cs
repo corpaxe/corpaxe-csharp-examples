@@ -14,6 +14,8 @@
         private const string BaseApiUrl = "https://sandboxcorpaxeapi.azurewebsites.net/";
         private const string ApiVersion = "1";
 
+        private const int UnprocessibleEntityStatusCode = 422;
+
         public static void Main(string[] args)
         {
             var consumerKey = "<FILL IN CONSUMER KEY HERE>";
@@ -114,12 +116,13 @@
             }";
 
             var eventId = CreateEventAndReturnId(accessToken, eventAsJsonString);
-
-            var dynamicEvent = GetEventById(accessToken, eventId);
-
-            Console.WriteLine("Id created: {0}", eventId);
-            Console.WriteLine("Id retrieved: {0}", dynamicEvent.id.ToString());
-
+            if (eventId > 0)
+            {
+                Console.WriteLine("Id created: {0}", eventId);
+                var dynamicEvent = GetEventById(accessToken, eventId);
+                Console.WriteLine("Id retrieved: {0}", dynamicEvent.id.ToString());
+            }
+            
             Console.ReadLine();
         }
 
@@ -172,26 +175,63 @@
 
         private static dynamic GetResponseAsDynamicObject(HttpWebRequest request)
         {
-            using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
+            try
             {
-                if (response != null)
+                using (var response = request.GetResponse() as HttpWebResponse)
                 {
-                    if (response.StatusCode == HttpStatusCode.OK)
+                    if (response != null)
                     {
-                        using (var stream = response.GetResponseStream())
+                        if (response.StatusCode == HttpStatusCode.OK)
                         {
-                            if (stream != null)
+                            using (var stream = response.GetResponseStream())
                             {
-                                using (var reader = new StreamReader(stream))
-                                {
-                                    var converter = new ExpandoObjectConverter();
-                                    return JsonConvert.DeserializeObject<ExpandoObject>(reader.ReadToEnd(), converter);
-                                }
+                                return GetDynamicObjectFromStream(stream);
                             }
                         }
                     }
                 }
             }
+            catch (WebException ex)
+            {
+                using (var response = ex.Response as HttpWebResponse)
+                {
+                    if (response != null)
+                    {
+                        if (response.StatusCode == (HttpStatusCode)UnprocessibleEntityStatusCode)
+                        {
+                            using (var stream = response.GetResponseStream())
+                            {
+                                dynamic validationErrors = GetDynamicObjectFromStream(stream);
+                                if (validationErrors != null)
+                                {
+                                    Console.WriteLine("Event failed validation due to the following issues:");
+                                    foreach (var validationError in validationErrors.Errors)
+                                    {
+                                        Console.WriteLine(validationError.RawErrorMessage);
+                                    }
+                                    return null;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                throw;
+            }
+            return null;
+        }
+
+        private static dynamic GetDynamicObjectFromStream(Stream stream)
+        {
+            if (stream != null)
+            {
+                using (var reader = new StreamReader(stream))
+                {
+                    var converter = new ExpandoObjectConverter();
+                    return JsonConvert.DeserializeObject<ExpandoObject>(reader.ReadToEnd(), converter);
+                }
+            }
+
             return null;
         }
     }
