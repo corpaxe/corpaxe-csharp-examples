@@ -5,6 +5,7 @@
     using System.IO;
     using System.Net;
     using System.Text;
+
     using Newtonsoft.Json;
     using Newtonsoft.Json.Converters;
 
@@ -116,7 +117,7 @@
 
             var dynamicEvent = GetEventById(accessToken, eventId);
 
-            Console.WriteLine("Id created: {0}", eventId.ToString());
+            Console.WriteLine("Id created: {0}", eventId);
             Console.WriteLine("Id retrieved: {0}", dynamicEvent.id.ToString());
 
             Console.ReadLine();
@@ -125,7 +126,7 @@
         public static string GetAccessToken(string consumerKey, string consumerSecret, string username, string password)
         {
             var request = (HttpWebRequest)WebRequest.Create(BaseApiUrl + "api/token");
-            var authorizationHeader = System.Convert.ToBase64String(System.Text.Encoding.GetEncoding("ISO-8859-1").GetBytes(consumerKey + ":" + consumerSecret));
+            var authorizationHeader = Convert.ToBase64String(Encoding.GetEncoding("ISO-8859-1").GetBytes(consumerKey + ":" + consumerSecret));
             request.Headers.Add("Authorization", "Basic " + authorizationHeader);
             request.Accept = string.Format("application/json; version={0}", ApiVersion);
             request.ContentType = "application/x-www-form-urlencoded";
@@ -159,7 +160,7 @@
 
         public static dynamic GetEventById(string accessToken, long eventId)
         {
-            var request = (HttpWebRequest)WebRequest.Create(BaseApiUrl + "api/events/" + eventId.ToString());
+            var request = (HttpWebRequest)WebRequest.Create(BaseApiUrl + "api/events/" + eventId);
             request.Headers.Add("Authorization", "Bearer " + accessToken);
             request.Accept = string.Format("application/json; version={0}", ApiVersion);
             request.ContentType = "application/json";
@@ -173,14 +174,20 @@
         {
             using (HttpWebResponse response = request.GetResponse() as HttpWebResponse)
             {
-                if (response.StatusCode == HttpStatusCode.OK)
+                if (response != null)
                 {
-                    using (var stream = response.GetResponseStream())
+                    if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        using (var reader = new StreamReader(stream))
+                        using (var stream = response.GetResponseStream())
                         {
-                            var converter = new ExpandoObjectConverter();
-                            return JsonConvert.DeserializeObject<ExpandoObject>(reader.ReadToEnd(), converter);
+                            if (stream != null)
+                            {
+                                using (var reader = new StreamReader(stream))
+                                {
+                                    var converter = new ExpandoObjectConverter();
+                                    return JsonConvert.DeserializeObject<ExpandoObject>(reader.ReadToEnd(), converter);
+                                }
+                            }
                         }
                     }
                 }
