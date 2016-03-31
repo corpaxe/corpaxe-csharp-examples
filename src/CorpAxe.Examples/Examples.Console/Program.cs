@@ -11,7 +11,7 @@
 
     public class Program
     {
-        private const string BaseApiUrl = "https://sandboxcorpaxeapi.azurewebsites.net/";
+        private const string BaseApiUrl = "https://sandboxapi.corpaxe.com/";
         private const string ApiVersion = "1";
 
         private const int UnprocessibleEntityStatusCode = 422;
